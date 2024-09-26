@@ -2,6 +2,8 @@ from django.db import models
 
 from root.utils import BaseModel
 from users.models import User
+from django.dispatch import receiver
+from django.db.models.signals import post_save
 # Create your models here.
 
 class Customer(BaseModel):
@@ -28,6 +30,7 @@ class Product(BaseModel):
     category = models.ForeignKey(Category, on_delete = models.CASCADE, related_name = "product_category")
     image = models.ImageField(upload_to = "product/images", null = False, blank = False)
     updated_at = models.DateTimeField(auto_now_add = True)
+    views = models.PositiveIntegerField(default = 0, null = True, blank = False)
 
     def __str__(self):
         return f"{self.name}"
@@ -86,6 +89,11 @@ class Cart(BaseModel):
         return f"Cart for {self.user.username}"
     
 
+@receiver(post_save, sender = User)
+def create_user_cart(sender, created, instance, *args, **kwargs):
+    if created:
+        Cart.objects.create(user = instance)
+
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
@@ -135,6 +143,7 @@ class Payment(BaseModel):
 class Subscription(BaseModel):
     name = models.CharField(max_length=100, null = True)
     email = models.EmailField(unique=True, null = True, blank = False)
+    status = models.BooleanField(default = False)
     
     def __str__(self):
         return f"{self.name}"

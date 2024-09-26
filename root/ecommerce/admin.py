@@ -11,6 +11,7 @@ admin.site.register([
     Cart,
     CartItem,
     Review,
-    Discount
+    Discount,
+    Subscription
 ]
 )

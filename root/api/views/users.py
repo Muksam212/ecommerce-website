@@ -21,6 +21,10 @@ from rest_framework.permissions import IsAuthenticated
 
 from ..views.renderers import UserRenderers
 
+from .filters import CustomerFilter
+
+from django_filters.rest_framework import DjangoFilterBackend
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
 
@@ -47,11 +51,16 @@ class CustomerRegisterAPIView(CreateAPIView):
 
 class CustomerListAPIView(ListAPIView):
     serializer_class = CustomerListSerializer
-
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CustomerFilter
+    model = Customer
     def get(self, request, format = None):
-        customer = Customer.objects.all()
-        serializer = CustomerListSerializer(customer, many = True)
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = CustomerListSerializer(queryset, many=True)
         return Response(serializer.data)
+    
+    def get_queryset(self):
+        return Customer.objects.all()
     
 
 class CustomerLoginAPIView(CreateAPIView):
@@ -77,6 +86,7 @@ class CustomerLoginAPIView(CreateAPIView):
 
 class CustomerProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, format = None):
         user = request.user
         users = Customer.objects.all().filter(user = user)
